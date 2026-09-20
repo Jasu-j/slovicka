@@ -1,0 +1,740 @@
+/* Slovníček – jediný stylopis. Systémový font, bez externích souborů. */
+
+:root {
+  --bg: #fff;
+  --fg: #111;
+  --muted: #555;
+  --line: #ddd;
+  --error: #b3261e;
+  --focus: #1a73e8;
+
+  /* Barvy teček (doporučené ze zadání) + tmavší obrys, aby tečka měla dost kontrastu i na bílé. */
+  --red: #c0392b;
+  --red-dark: #8f281e;
+  --yellow: #e0a800;
+  --yellow-dark: #8a6700;
+  --green: #2e8b57;
+  --green-dark: #1f6440;
+
+  --gutter: 16px;
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 18px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+#app {
+  height: 100dvh;
+}
+
+/* ---------- rozvržení obrazovky ---------- */
+
+.screen {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: max(var(--gutter), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--gutter), env(safe-area-inset-right, 0px));
+}
+
+.app-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+}
+
+.app-title {
+  flex: 1;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -10px; /* ikona zarovnaná s levým okrajem obsahu */
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.word-row .icon-btn {
+  margin-left: 0;
+  margin-right: -10px;
+}
+
+/* ---------- tlačítka a vstupy ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 2px solid var(--fg);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn--primary {
+  background: var(--fg);
+  color: #fff;
+}
+
+.btn--small {
+  padding: 0 12px;
+  font-size: 16px;
+}
+
+.btn--large {
+  width: 100%;
+  min-height: 52px;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.text-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 2px solid var(--fg);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--fg);
+  font: inherit;
+  font-size: 18px;
+}
+
+.text-input:disabled {
+  opacity: 0.6;
+}
+
+.status {
+  margin: 0;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.status--error {
+  color: var(--error);
+}
+
+/* ---------- seznam slov ---------- */
+
+.word-list-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.word-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.word-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 8px;
+  transition: background-color 0.4s;
+}
+
+.word-row--highlight {
+  background: #fff1a8;
+}
+
+.word-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.word-text .en {
+  font-weight: 600;
+}
+
+.empty {
+  margin: 0;
+  padding: 32px 8px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------- barevné tečky (barva + symbol) ---------- */
+
+.dot {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dot--red {
+  background: var(--red);
+  border-color: var(--red-dark);
+  color: #fff;
+}
+
+.dot--yellow {
+  background: var(--yellow);
+  border-color: var(--yellow-dark);
+  color: #111;
+}
+
+.dot--green {
+  background: var(--green);
+  border-color: var(--green-dark);
+  color: #fff;
+}
+
+/* ---------- hlavní obrazovka: vstup dole ---------- */
+
+.composer {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0 12px;
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.composer-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* ---------- Library ---------- */
+
+.search-bar {
+  position: relative;
+  flex: none;
+}
+
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  display: flex;
+  color: var(--muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.search-input {
+  padding-left: 44px;
+}
+
+.count {
+  flex: none;
+  min-height: 1.4em;
+  margin: 8px 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.dialog {
+  width: min(92vw, 420px);
+  padding: 20px;
+  border: 2px solid var(--fg);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--fg);
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.dialog h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+.dialog-text {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.dialog-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dialog > .status {
+  margin-bottom: 12px;
+}
+
+.dialog > .btn {
+  width: 100%;
+}
+
+/* ---------- Flashcards: nastavení ---------- */
+
+.panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 8px 0 16px;
+  overflow-y: auto;
+}
+
+.field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.field legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-weight: 700;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  position: relative;
+}
+
+.chip input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.chip-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 2px solid var(--fg);
+  border-radius: 999px;
+  background: #fff;
+  font-weight: 600;
+}
+
+.chip input:checked + .chip-label {
+  background: var(--fg);
+  color: #fff;
+}
+
+.chip input:focus-visible + .chip-label {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.match-info {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.match-hint {
+  margin: -12px 0 0;
+  color: var(--error);
+  font-size: 16px;
+}
+
+/* ---------- Flashcards: hra ---------- */
+
+.game-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+}
+
+.counter {
+  font-weight: 700;
+}
+
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 24px; /* karta má od okraje odsazení ≥ 24 px (systémové gesto „zpět" u okraje) */
+}
+
+.card-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: min(58dvh, 420px);
+  perspective: 1200px;
+  touch-action: pan-y;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.card-wrap.flying {
+  transition: transform 0.22s ease-in;
+}
+
+.card-wrap.enter {
+  animation: card-in 0.18s ease-out;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.card-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.4s;
+}
+
+.card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-inner.no-anim {
+  transition: none;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 24px;
+  border: 2px solid var(--fg);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  text-align: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.face--back {
+  background: #f4f4f4;
+  transform: rotateY(180deg);
+}
+
+.lang-tag {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  padding: 1px 8px;
+  border: 2px solid var(--fg);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.card-text {
+  font-size: clamp(28px, 9vw, 40px);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* Razítko při přejíždění: symbol + barva, aby barva nebyla jediným nositelem informace. */
+.stamp {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  right: 16px;
+  font-size: 34px;
+  font-weight: 800;
+  opacity: 0;
+  transition: opacity 0.1s;
+  pointer-events: none;
+}
+
+.stamp--ok {
+  color: var(--green);
+}
+
+.stamp--bad {
+  color: var(--red);
+}
+
+.card-wrap[data-swipe="ok"] .stamp--ok,
+.card-wrap[data-swipe="bad"] .stamp--bad {
+  opacity: 1;
+}
+
+.rate-bar {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0 12px;
+}
+
+.rate-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  text-align: center;
+}
+
+.rate-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.rate-btn {
+  min-height: 56px;
+}
+
+.summary {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding-bottom: 24px;
+  text-align: center;
+}
+
+.summary h2 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.summary-text {
+  margin: 0 0 12px;
+  font-size: 22px;
+}
+
+/* ---------- menu (zleva, černé) ---------- */
+
+.menu-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  visibility: hidden;
+  pointer-events: none;
+  transition: visibility 0s linear 0.25s;
+}
+
+.menu-root.open {
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.menu-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.menu-root.open .menu-backdrop {
+  opacity: 1;
+}
+
+.menu {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(80vw, 320px);
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 0 env(safe-area-inset-bottom, 0px);
+  background: #000;
+  color: #fff;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+}
+
+.menu-root.open .menu {
+  transform: none;
+}
+
+.menu-title {
+  margin: 0;
+  padding: 12px 20px 20px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.menu-link {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 0 20px;
+  color: #fff;
+  font-size: 20px;
+  text-decoration: none;
+}
+
+.menu-link[aria-current="page"] {
+  background: #2b2b2b;
+  box-shadow: inset 4px 0 0 #fff;
+  font-weight: 700;
+}
+
+.menu-link:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: -3px;
+}
+
+/* ---------- toasty ---------- */
+
+#toasts {
+  position: fixed;
+  right: 0;
+  bottom: var(--toast-bottom, calc(env(safe-area-inset-bottom, 0px) + 16px));
+  left: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0 var(--gutter);
+  pointer-events: none;
+}
+
+.toast {
+  max-width: min(100%, 420px);
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: #111;
+  color: #fff;
+  font-size: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  animation: toast-in 0.2s ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ---------- malé displeje a otočení ---------- */
+
+@media (max-width: 340px) {
+  :root {
+    --gutter: 12px;
+  }
+  .word-text {
+    font-size: 18px;
+  }
+  .stage {
+    padding-inline: 24px;
+  }
+}
+
+@media (max-height: 480px) {
+  .card-wrap {
+    height: min(52dvh, 420px);
+  }
+  .card-text {
+    font-size: 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
