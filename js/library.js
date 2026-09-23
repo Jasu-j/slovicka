@@ -1,10 +1,11 @@
-// Library: všechna slova abecedně podle angličtiny, vyhledávání, mazání a záloha.
+// Library: všechna slova abecedně podle angličtiny, vyhledávání, úpravy, mazání a záloha.
 
 import { el, createDot, createIcon, createHeader, showToast, reportError, pluralWords } from "./ui.js";
-import { getWords, deleteWord, exportJson, importJson, normalizeText } from "./storage.js";
+import { getWords, updateWord, deleteWord, exportJson, importJson, normalizeText, MAX_TEXT } from "./storage.js";
 
 const collator = new Intl.Collator("en", { sensitivity: "base" });
 const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+const HIGHLIGHT_MS = 1500;
 
 // Bez ohledu na velikost písmen a diakritiku: "JÁB" najde "jablko".
 const fold = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -16,6 +17,10 @@ function backupFileName() {
 }
 
 export function mount(root) {
+  let editing = null; // rozepsaná úprava {id, en, cs}; drží se, i když se seznam překreslí (např. hledáním)
+  let editStatus = null; // řádek s chybou uvnitř formuláře úpravy
+  let highlightTimer = null;
+
   const list = el("div", { class: "word-list-wrap", tabindex: "-1" });
   const count = el("p", { class: "count", role: "status" });
   const search = el("input", {
@@ -126,26 +131,146 @@ export function mount(root) {
       el(
         "ul",
         { class: "word-list" },
-        shown.map((w) =>
-          el(
-            "li",
-            { class: "word-row" },
-            el("span", { class: "word-text" }, el("span", { class: "en" }, w.en), " – ", el("span", { class: "cs" }, w.cs)),
-            createDot(w.streak),
-            el(
-              "button",
-              {
-                class: "icon-btn",
-                type: "button",
-                "aria-label": `Smazat ${w.en} – ${w.cs}`,
-                onclick: () => onDelete(w),
-              },
-              createIcon("trash")
-            )
-          )
+        shown.map((w) => (editing && editing.id === w.id ? editRow(w) : wordRow(w)))
+      )
+    );
+  }
+
+  function wordRow(w) {
+    return el(
+      "li",
+      { class: "word-row", dataset: { id: w.id } },
+      el("span", { class: "word-text" }, el("span", { class: "en" }, w.en), " – ", el("span", { class: "cs" }, w.cs)),
+      createDot(w.streak),
+      el(
+        "span",
+        { class: "row-actions" },
+        el(
+          "button",
+          {
+            class: "icon-btn",
+            type: "button",
+            "aria-label": `Upravit ${w.en} – ${w.cs}`,
+            onclick: () => startEdit(w),
+          },
+          createIcon("edit")
+        ),
+        el(
+          "button",
+          {
+            class: "icon-btn",
+            type: "button",
+            "aria-label": `Smazat ${w.en} – ${w.cs}`,
+            onclick: () => onDelete(w),
+          },
+          createIcon("trash")
         )
       )
     );
+  }
+
+  // ---------- úprava slova ----------
+
+  function editField(label, key) {
+    const input = el("input", {
+      class: "text-input",
+      type: "text",
+      value: editing[key],
+      maxlength: MAX_TEXT,
+      "aria-label": label,
+      autocapitalize: "none",
+      autocomplete: "off",
+      autocorrect: "off",
+      spellcheck: "false",
+      dataset: { field: key },
+      oninput: () => {
+        editing[key] = input.value;
+        showEditError("");
+      },
+      onkeydown: (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          saveEdit();
+        } else if (e.key === "Escape") {
+          cancelEdit();
+        }
+      },
+    });
+    return el("label", { class: "edit-field" }, el("span", { class: "edit-label" }, label), input);
+  }
+
+  function editRow(w) {
+    editStatus = el("p", { class: "status status--error", role: "alert", hidden: true });
+    return el(
+      "li",
+      { class: "word-row word-row--editing", dataset: { id: w.id } },
+      editField("Anglicky", "en"),
+      editField("Česky", "cs"),
+      editStatus,
+      el(
+        "div",
+        { class: "edit-actions" },
+        el("button", { class: "btn", type: "button", onclick: cancelEdit }, "Zrušit"),
+        el("button", { class: "btn btn--primary", type: "button", onclick: saveEdit }, "Uložit")
+      )
+    );
+  }
+
+  function showEditError(message) {
+    if (!editStatus) return;
+    editStatus.textContent = message;
+    editStatus.hidden = !message;
+  }
+
+  function startEdit(w) {
+    editing = { id: w.id, en: w.en, cs: w.cs };
+    renderList();
+    const row = list.querySelector(`[data-id="${CSS.escape(w.id)}"]`);
+    if (!row) return;
+    row.scrollIntoView({ block: "nearest" });
+    // Nejčastěji se opravuje význam, tedy české slovo.
+    const cs = row.querySelector('[data-field="cs"]');
+    cs.focus();
+    cs.setSelectionRange(cs.value.length, cs.value.length);
+  }
+
+  function cancelEdit() {
+    editing = null;
+    editStatus = null;
+    renderList();
+  }
+
+  function saveEdit() {
+    if (!editing) return;
+    const { id, en, cs } = editing;
+    try {
+      const { status } = updateWord(id, { en, cs });
+      if (status === "duplicate") {
+        showEditError("Taková dvojice už v knihovně je.");
+        return;
+      }
+      editing = null;
+      editStatus = null;
+      renderList();
+      if (status === "unchanged") return;
+      const visible = highlight(id);
+      showToast(visible ? "Uloženo" : "Uloženo, ale slovo už neodpovídá hledání");
+    } catch (err) {
+      if (err && err.code === "INVALID") showEditError(err.message);
+      else reportError(err);
+    }
+  }
+
+  /** Krátce zvýrazní řádek (po úpravě se může přesunout jinam v abecedě). Vrací false, když není vidět. */
+  function highlight(id) {
+    const row = list.querySelector(`[data-id="${CSS.escape(id)}"]`);
+    if (!row) return false;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    row.scrollIntoView({ block: "nearest", behavior: reduced ? "auto" : "smooth" });
+    clearTimeout(highlightTimer);
+    row.classList.add("word-row--highlight");
+    highlightTimer = setTimeout(() => row.classList.remove("word-row--highlight"), HIGHLIGHT_MS);
+    return true;
   }
 
   function onDelete(w) {
@@ -200,6 +325,7 @@ export function mount(root) {
   }
 
   return function unmount() {
+    clearTimeout(highlightTimer);
     if (dialog.open) dialog.close();
   };
 }

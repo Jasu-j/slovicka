@@ -7,7 +7,7 @@
 import { STORAGE_KEY } from "./config.js";
 
 const VERSION = 1;
-const MAX_TEXT = 500;
+export const MAX_TEXT = 500;
 const MAX_STREAK = 3;
 const COLORS = ["red", "yellow", "green"];
 const COUNTS = [10, 20, 50, "all"];
@@ -179,6 +179,39 @@ export function addWord({ en, cs }) {
     throw e;
   }
   return { status: "added", word: { ...word } };
+}
+
+/**
+ * Upraví anglické a/nebo české slovo existujícího záznamu.
+ * Když se změní význam (dvojice se liší i po ignorování velikosti písmen a mezer), streak se
+ * vynuluje, protože jde o nové slovo k naučení; oprava velikosti písmen streak nemění.
+ * Duplicita s jiným záznamem se odmítne. Neplatný vstup vyhodí chybu s code "INVALID".
+ * @returns {{status: "updated"|"unchanged"|"duplicate", word: object}}
+ */
+export function updateWord(id, { en, cs }) {
+  const i = data.words.findIndex((w) => w.id === id);
+  if (i < 0) throw new Error("Slovo už neexistuje.");
+  const prev = data.words[i];
+
+  const next = cleanWord({ ...prev, en, cs });
+  if (!next) {
+    throw Object.assign(new Error(`Vyplň obě slova (každé max. ${MAX_TEXT} znaků).`), { code: "INVALID" });
+  }
+  if (next.en === prev.en && next.cs === prev.cs) return { status: "unchanged", word: { ...prev } };
+
+  const key = dupKey(next.en, next.cs);
+  const other = data.words.find((w, j) => j !== i && dupKey(w.en, w.cs) === key);
+  if (other) return { status: "duplicate", word: { ...other } };
+
+  if (key !== dupKey(prev.en, prev.cs)) next.streak = 0;
+  data.words[i] = next;
+  try {
+    save();
+  } catch (e) {
+    data.words[i] = prev;
+    throw e;
+  }
+  return { status: "updated", word: { ...next } };
 }
 
 export function deleteWord(id) {

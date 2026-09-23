@@ -27,6 +27,7 @@ export function el(tag, attrs = {}, ...children) {
 const ICONS = {
   menu: ["M4 6h16", "M4 12h16", "M4 18h16"],
   trash: ["M4 7h16", "M10 11v6", "M14 11v6", "M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12", "M9 7V4h6v3"],
+  edit: ["M12 20h9", "M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"],
   search: ["M4 11a7 7 0 1 0 14 0a7 7 0 1 0-14 0", "M20 20l-4-4"],
   translate: ["M4 8h14", "M14 4l4 4-4 4", "M20 16H6", "M10 12l-4 4 4 4"],
   library: ["M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z", "M5 17a3 3 0 0 1 3-3h11"],
@@ -130,7 +131,7 @@ export function showToast(message, ms = TOAST_MS) {
 
 /** Zobrazí srozumitelnou hlášku z chyby (StorageError, ImportError, TranslateError…). */
 export function reportError(err) {
-  const known = err && ["STORAGE", "INVALID"].includes(err.code);
+  const known = err && ["STORAGE", "INVALID"].includes(err.code); // zprávy těchto chyb jsou určené uživateli
   showToast(known ? err.message : "Něco se nepovedlo. Zkus to prosím znovu.");
 }
 

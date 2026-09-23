@@ -1,6 +1,6 @@
 // Service worker: aplikace funguje offline (cache-first pro vlastní soubory).
 // Při každém nasazení změny ZVÝŠIT číslo ve CACHE_NAME, jinak si telefon ponechá staré soubory.
-const CACHE_NAME = "slovnicek-v1";
+const CACHE_NAME = "slovnicek-v2";
 
 // Všechny cesty relativní k sw.js, aby aplikace fungovala i pod podadresou (GitHub Pages).
 const APP_FILES = [
